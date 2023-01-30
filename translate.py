@@ -8,18 +8,20 @@ from imblearn.over_sampling import SMOTE
 import matplotlib.pyplot as plt
 from tensorflow import keras
 
+#Testing
+TEST_RIJEC = "echecs"
 SHOW_TRAINING_GRAPHS = False
+EPOCHS = 100
 
 def main():
     #Load raw data
     rawData = pd.read_csv("data.csv")
-
-    #Separating X and Y data
     x, y_string = getXYdata(rawData)
     classesArray = []
     for sss in y_string.values:
         if sss not in classesArray:
             classesArray.append(sss)
+
     y = []
     for i in range(len(y_string.values)):
         y.append(classesArray.index(y_string.values[i]))
@@ -27,7 +29,7 @@ def main():
     #Making train and test data
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.15, random_state=42, stratify=y)
 
-    #Model
+    #Model A
     normalizer = tf.keras.layers.Normalization(axis=-1)
     normalizer.adapt(x.values)
     model = tf.keras.Sequential([
@@ -36,29 +38,35 @@ def main():
         tf.keras.layers.Dense(128, activation='relu'),
         tf.keras.layers.Dense(67)
     ])
-    model.compile(optimizer='adam',
+    
+    model.compile(  optimizer='adam',
                     loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                     metrics=['accuracy'])
     
 
     #Train model
-    modelX = model.fit(np.array(x.values), np.array(y), epochs=100)
+    modelX = model.fit(np.array(x.values), np.array(y), epochs = EPOCHS, validation_split=0.2)
     
     #Graphs
-    if SHOW_TRAINING_GRAPHS==True:
+    if SHOW_TRAINING_GRAPHS:
         plt.plot(modelX.history['accuracy'])
         plt.plot(modelX.history['val_accuracy'])
+        plt.ylabel("Accuracy")
+        plt.xlabel("Epochs")
+        plt.title("MODEL A TRAINING (" + str(EPOCHS) + " Epochs)")
         plt.show()
 
-
-    #Testing
-    TEST_RIJEC = "volibol"
-
+    #Testiranje
     aaa = [TEST_RIJEC, "hmm", "hmm"]
     bbb = np.zeros((3,20))
     for i in range(3):
         bbb[i] = normalize(aaa[i])
     accuracy = model.predict(bbb[0])
+    osp = 0
+    for aaa in classesArray:
+        print("index: " + str(osp) + " -> " + aaa)
+        osp+=1
+    
     print('Test accuracy :', accuracy[0])
     result = np.where(accuracy[0] == np.amax(accuracy[0]))
     print(classesArray[result[0][0]] + ", id: " + str(result[0][0]) + ", accuracy: "+ str(accuracy[0][result[0][0]]))
